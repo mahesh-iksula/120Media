@@ -1,0 +1,217 @@
+<?php
+
+/**
+ * @file
+ * Install, and uninstall functions for the intelliswift create content type module
+ */
+
+/**
+ * Implements hook_install().
+ */
+function intelli_ct_type_install() {
+  node_types_rebuild();
+  $types = node_type_get_types();
+  add_custom_fields();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function intelli_ct_type_uninstall() {
+  //first select all nodes of Product content type, and then delete the all nodes
+  $ournewtype = 'product';
+  $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+  $result = db_query($sql, array(':type' => $ournewtype));
+  $nodeids = array();
+  foreach ($result as $row) {
+    $nodeids[] = $row->nid;
+  }
+  node_delete_multiple($nodeids);
+  delete_custom_fields(); //then delete custom filds belongs to Product content type
+  node_type_delete($ournewtype); //delete content type
+  field_purge_batch(500);
+}
+
+/**
+ * This function is used to delete custom fields and there resp. instance from database
+ */
+function delete_custom_fields() {
+  foreach (array_keys(_intelli_ct_type_installed_fields()) as $field) {
+    field_delete_field($field); //delete field
+  }
+  $instances = field_info_instances('node', 'product');
+  foreach ($instances as $instance_name => $fieldinstance) {
+    field_delete_instance($fieldinstance); //delete instances
+  }
+}
+
+/**
+ * This function is used to define custom field for Product content type
+ * @return type
+ */
+function _intelli_ct_type_installed_fields() {
+  $t = get_t(); //Returns the name of the proper localization function.
+  return array(
+    'intelli_ct_type_description' => array(
+      'field_name' => 'intelli_ct_type_description',
+      'label' => $t('Description'),
+      'type' => 'text_with_summary'
+    ),
+    'intelli_ct_type_sell_price' => array(
+      'field_name' => 'intelli_ct_type_sell_price',
+      'label' => $t('Selling Price'),
+      'type' => 'text'
+    ),
+    'intelli_ct_type_offer_price' => array(
+      'field_name' => 'intelli_ct_type_offer_price',
+      'label' => $t('Offer Price'),
+      'type' => 'text'
+    ),
+    'intelli_ct_type_product_image' => array(
+      'field_name' => 'intelli_ct_type_product_image',
+      'label' => $t('Product Image'),
+      'type' => 'image',
+      'settings' => array('uri_scheme' => 'public', 'default_image' => FALSE, ),
+    ),
+    'intelli_ct_type_product_sku' => array(
+      'field_name' => 'intelli_ct_type_product_sku',
+      'label' => $t('SKU'),
+      'type' => 'text'
+    ),
+    'intelli_ct_type_product_tag' => array(
+      'field_name' => 'intelli_ct_type_product_tag',
+      'label' => $t('Product Tag'),
+      'type' => 'taxonomy_term_reference',
+      'cardinality' => -1,
+      'settings' => array(
+        'allowed_values' => array(array(
+            'vocabulary' => 'tags',
+            'parent' => 0,
+          ),
+        ),
+      ),
+    ),
+    'intelli_ct_type_product_brand' => array(
+      'field_name' => 'intelli_ct_type_product_brand',
+      'label' => $t('Product Brand'),
+      'type' => 'list_text',
+      'settings' => array(
+        'allowed_values' => array('Blackberry' => 'Blackberry', 'Huawei' => 'Huawei', 'HTC' => 'HTC', 'Motorola' => 'Motorola', ),
+      ),
+    ),
+  );
+}
+
+/**
+ * This function is used to define custom field instances for Product content type
+ * @return type
+ */
+function _intelli_ct_type_installed_instances() {
+  $t = get_t(); //Returns the name of the proper localization function.
+  return array(
+    'intelli_ct_type_description' => array(
+      'field_name' => 'intelli_ct_type_description',
+      'label' => $t('Description'),
+      'type' => 'text_with_summary',
+      'widget' => array(
+        'type' => 'text_textarea_with_summary',
+        'settings' => array('rows' => 20, 'summary_rows' => 5, ),
+        'module' => 'text',
+      ),
+      'settings' => array(
+        'display_summary' => TRUE,
+        'text_processing' => 1,
+        'user_register_form' => FALSE,
+      ),
+    ),
+    'intelli_ct_type_sell_price' => array(
+      'field_name' => 'intelli_ct_type_sell_price',
+      'type' => 'text',
+      'label' => $t('Selling Price'),
+      'widget' => array(
+        'type' => 'text_textfield'
+      ),
+      'display' => array(
+        'example_node_list' => array(
+          'label' => $t('Selling Price'),
+          'type' => 'text'
+        )
+      )
+    ),
+    'intelli_ct_type_offer_price' => array(
+      'field_name' => 'intelli_ct_type_offer_price',
+      'type' => 'text',
+      'label' => $t('Offer Price'),
+      'widget' => array(
+        'type' => 'text_textfield'
+      ),
+      'display' => array(
+        'example_node_list' => array(
+          'label' => $t('Offer Price'),
+          'type' => 'text'
+        )
+      )
+    ),
+    'intelli_ct_type_product_image' => array(
+      'field_name' => 'intelli_ct_type_product_image',
+      'label' => $t('Product Image'),
+      'type' => 'image',
+      'widget' => array(
+        'type' => 'image_image',
+        'settings' => array('progress_indicator' => 'throbber', 'preview_image_style' => 'thumbnail', ),
+        'module' => 'image',
+      ),
+      'settings' => array(
+        'file_directory' => 'field/image',
+        'file_extensions' => 'png gif jpg jpeg',
+      ),
+    ),
+    'intelli_ct_type_product_sku' => array(
+      'field_name' => 'intelli_ct_type_product_sku',
+      'type' => 'text',
+      'label' => $t('SKU'),
+      'widget' => array(
+        'type' => 'text_textfield'
+      ),
+      'display' => array(
+        'example_node_list' => array(
+          'label' => $t('SKU'),
+          'type' => 'text'
+        )
+      )
+    ),
+    'intelli_ct_type_product_tag' => array(
+      'field_name' => 'intelli_ct_type_product_tag',
+      'label' => $t('Product Tag'),
+      'widget' => array(
+        'type' => 'taxonomy_autocomplete',
+        'settings' => array('size' => 60, 'autocomplete_path' => 'taxonomy/autocomplete', ),
+      ),
+    ),
+    'intelli_ct_type_product_brand' => array(
+      'field_name' => 'intelli_ct_type_product_brand',
+      'label' => $t('Product Brand'),
+      'type' => 'list_text',
+      'settings' => array(
+        'allowed_values' => array('Blackberry' => 'Blackberry', 'Huawei' => 'Huawei', 'HTC' => 'HTC', 'Motorola' => 'Motorola', ),
+      ),
+      'widget' => array(
+        'type' => ' options_select',
+      ),
+    ),
+  );
+}
+
+/**
+ * This function is used to add Fields and Instances to Product Content type
+ */
+function add_custom_fields() {
+  foreach (_intelli_ct_type_installed_fields() as $field) {
+    field_create_field($field); //create a field
+  }
+  foreach (_intelli_ct_type_installed_instances() as $fieldinstance) {
+    $fieldinstance['entity_type'] = 'node'; //assign entity
+    $fieldinstance['bundle'] = 'product'; //assign bundle
+    field_create_instance($fieldinstance); //create a field instances
+  }
+}

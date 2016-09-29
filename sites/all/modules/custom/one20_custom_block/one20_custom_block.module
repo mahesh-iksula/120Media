@@ -1,0 +1,62 @@
+<?php
+
+/* 
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+function one20_custom_block_block_info() {
+  $blocks['recently_post'] = array(
+    'info' => t('Recently'),
+    'cache' => DRUPAL_CACHE_GLOBAL,
+    'region' => 'sidebar_second',
+    'status' => 1,
+  );
+  return $blocks;
+}
+
+function one20_custom_block_block_view($delta = '') {
+  switch ($delta) {
+    case 'recently_post':
+      $block['subject'] = 'Related';
+      $block['content'] = one20_get_related_post_by_content_type();
+      break;
+  }
+  return $block;
+}
+
+function one20_custom_block_menu_alter(&$items) {
+  $items['taxonomy/term/%taxonomy_term']['page callback'] = 'bbd_category_product_listings';
+}
+
+function bbd_category_product_listings($taxonomy_term){
+  $output = views_embed_view('category_listing_page', 'page', $taxonomy_term->vid, $taxonomy_term->tid);
+  return $output;
+}
+
+function one20_get_related_post_by_content_type() {
+  $node_obj = node_load(arg(1));
+  $visting_nid = arg(1);
+  if (!empty($visting_nid))
+    $visting_nid_type = $node_obj->type;
+  $q = db_select('node', 'l');
+  $q->fields('l', array('nid'));
+  $q->condition('type', $visting_nid_type);
+  $q->condition('nid', $visting_nid, '!=');
+  $q->range(0, 4);
+  $q->orderRandom();
+  $res = $q->execute()->fetchCol();
+  $output = "";
+  foreach($res as $nid){
+    $output .= '<div class="relatedThumb">';
+    $node_obj = node_load($nid);
+    if (!empty($node_obj->field_featured_image['und'][0]['uri']))
+      $pro_img = (theme('image_style', array('style_name' => 'related_thumb_style', 'path' => $node_obj->field_featured_image['und'][0]['uri'], 'attributes' => array('class' => 'thumbnail'))));
+    else
+      $pro_img = '<img src="sites/all/themes/one_20_media/images/latest-thumb.jpg" />';
+    $output .= '<a href="' . url('node/' . $node_obj->nid) . '">' . $pro_img . '<h4>' . $node_obj->title . '<h4></a>';
+    $output .= '</div>';
+  }
+  return $output;
+}

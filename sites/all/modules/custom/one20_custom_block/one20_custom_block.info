@@ -1,0 +1,4 @@
+name = 120 Media Custom Block
+description = This Module add one custom block of Related Content
+package = Custom
+core = 7.x

@@ -1,0 +1,75 @@
+<?php
+
+/**
+ * @file
+ * This file provides the admin menu url of Product Data Display and Product Uploader page URL
+ * also we define new Content type called "Product"
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function intelli_ct_type_menu() {
+  //display product data
+  $items['admin/product-view'] = array(
+    'title' => 'Product Data',
+    'description' => 'Find and manage Product content',
+    'page callback' => 'display_product_data',
+    'access arguments' => array('access content overview'),
+    'weight' => -10,
+    'file' => 'intelli_ct_type.admin.inc',
+  );
+  //Uploader for Product Data
+  $items['admin/product-uploader'] = array(
+    'title' => 'Upload the Products',
+    'description' => 'product uploader',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('product_uploader_form'),
+    'access arguments' => array('access content overview'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'forms/product_uploader.form.inc',
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_node_info()
+ */
+function intelli_ct_type_node_info() {
+  //here we define the new content type 
+  return array(
+    'product' => array(
+      'name' => t('Product'),
+      'base' => 'product',
+      'description' => t('You can define new Products here'),
+      'has_title' => TRUE,
+      'title_label' => t('Product title')
+    )
+  );
+}
+
+/**
+ * Implement hook_form()
+ */
+function product_form($node, $form_state) {
+  return node_content_form($node, $form_state);
+}
+
+/**
+ * Implements hook_help().
+ *
+ * Displays help and module information.
+ *
+ * @param path 
+ *   Which path of the site we're using to display help
+ * @param arg 
+ *   Array that holds the current path as returned from arg() function
+ */
+function intelli_ct_type_help($path, $arg) {
+  switch ($path) {
+    case "admin/help#intelli_ct_type":
+      return '' . t("The Intelliswift Create content type module create a Product Content type by Programmitically
+and also We display Product Data and also Provide Product Import by CSV uploder.") . '';
+      break;
+  }
+} 

@@ -1,0 +1,6 @@
+name = IntelliSwift Create Content Type
+description = This Module create a Content type programmetically, and display the add, edit and delete operation for this content type and also provide the import the content as well
+package = Custom
+core = 7.x
+files[] = intelli_ct_type.install
+files[] = intelli_ct_type.module
